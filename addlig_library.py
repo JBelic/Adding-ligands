@@ -42,7 +42,7 @@ def restr_distance_to_mol(self, other, excluded1=None, excluded2=None, result_un
             return res, atom1, atom2
         return res
 
-# Function for matrix rotation
+
 def rotation_matrix(vec1, vec2):
     """
     Calculates the rotation matrix rotating *vec1* to *vec2*. Vectors can be any containers with 3 numerical values. 
@@ -57,7 +57,7 @@ def rotation_matrix(vec1, vec2):
 def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
     """
     Function takes four arguments, list of atoms and atoms. It takes 1. ligand coordinates, 2. H atom that will be substituted on ligand, 
-    3. atom connected to the H atom and 4. core coordinates
+    3. X atom on the ligand, 4. core coordinates and 5. distance limit between atoms.
     It rotates ligand around the bond between the H atom and atom connected to H. Criteria for good geometry is distance between ligand and core atoms.
     The H atom and atom connected to it are excuded from the distance check.
     Returns coordinates of rotated ligand and and symbols of closest atoms.
@@ -71,7 +71,7 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
         closest_atoms = (str(distance[1]).split())[0] + (str(distance[2]).split())[0]
     
     
-    # If distance is shorter than required, molecule is rotated for 360 degrees in 'angle_steps' and for every new position 
+    # If distance is shorter than required, molecule is rotated for 360 degrees in specified 'angle_steps' and for every new position 
     # shortest distance between two atoms and symbols of two atoms are placed in list 'atoms_distances'
     else:
         angle_step = 0.1745329252  # equals 10 degrees
@@ -118,15 +118,13 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
                 distance = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
                 closest_atoms =  (str(distance[1]).split())[0] + (str(distance[2]).split())[0]
             else:
+                # if non of the condidtions are fulfiled, program returns string instead of a float, user can separate those molecules
                 distance = ["Too short"]
                 closest_atoms = ["Too short"]
-
-    
-    #print ("distance", distance[0], "closest_atoms", closest_atoms)
    
     return ligand, closest_atoms
 
-# Connecting two molecules
+
 def connect_two_molecules(core,ligand,dist_limit):
     """
     Takes molecule coordinates as arguments. 
@@ -138,7 +136,7 @@ def connect_two_molecules(core,ligand,dist_limit):
     cc_lenght = 1.54 
     nc_lenght = 1.469
     
-    # Guess
+    # Guess 
     ligand.guess_bonds()
     core.guess_bonds()
 
@@ -177,8 +175,9 @@ def connect_two_molecules(core,ligand,dist_limit):
         closest_atoms_check = rotation_check(ligand,lig_h,lig_other,core,dist_limit)[1]
         final_check = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)[0]
     else:
+        # As these values are returned from a function, 
         closest_atoms_check = "diatomic"
-        final_check = "For diatomic ligand distance is 1.5 A"
+        final_check = "diatomic"
         
         
     # Deletes atom in ligand

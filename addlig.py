@@ -20,7 +20,7 @@ input_ligands = read_molecules(os.path.join(working_folder_path,'lig_test'))
 input_cores = read_molecules(os.path.join(working_folder_path,'cor_test'))
 
 new_directory = 'new_molecules'
-distance_limit_squared = 2.89 # square of 1.7;if atoms are closer than that geometry is rejected
+distance_limit_squared = 2.89 # square of 1.7; if atoms are closer, geometry is rejected
 
 
 ##############################################          new folders              ############################################
@@ -45,6 +45,7 @@ cores_list = []
 for i in range(len(input_ligands)):
     kopi = copy.deepcopy(coords_c)
     cores_list.append(kopi)
+    
 #Exctracting core and ligand names from imported dictionary
 lig_names = mol_names(input_ligands)
 cor_names = mol_names(input_cores)
@@ -52,21 +53,23 @@ cor_names = mol_names(input_cores)
 ##### Monosubstitution #####
 
 # To every list of cores one type of ligand is added
-# mono_subs contaions of [key] = name of new molecule, [value] = (coordinates of new molecule, shortest distance between core and ligand after its connection)
+# mono_subs contaions of key = name of molecule, value = (coordinates of new molecule, shortest distance between core and ligand after its connection)
 mono_subs = {}
 for d in range(len(input_ligands)):
     # In each list c goes through all cores. New copies of ligands are needed in every loop
     for c in range(len(input_cores)): 
        	ligando = copy.deepcopy(ligand_coords)
        	mono_subs[cor_names[c]+ "_" + lig_names[d]] = (connect_two_molecules(cores_list[d][c],ligando[d],distance_limit_squared))
-#print (mono_subs)
+
 #For diatomic molecules, distance is specified by user and it's given as a string. 
-#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance (float number) is too small molecule is stored in separate folder 
+#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining) 
+
 for name, molecule in mono_subs.items():
-    if (molecule[1]) == 'For diatomic ligand distance is 1.5 A':
+    if (molecule[1]) == 'diatomic':
         molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
     elif float(molecule[1]) >= distance_limit_squared:
         molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
+
     elif float(molecule[1]) < distance_limit_squared:
         if molecule[2] == 'HH':
             molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
@@ -103,8 +106,9 @@ for d in range(len(input_ligands)):
 
 #For diatomic molecules, distance is specified by user and it's given as a string. 
 #For the other molecule it's given as a float and it serves like indicator for steric clash, if distance (float number) is too small molecule is stored in separate folder 
+
 for name, molecule in di_subs.items():
-    if (molecule[1]) =='For diatomic ligand distance is 1.5 A':
+    if (molecule[1]) =='diatomic':
         molecule[0].write(os.path.join(working_folder,folders[1],name+'.xyz'))
     elif float(molecule[1]) >= distance_limit_squared:
         molecule[0].write(os.path.join(working_folder,folders[1],name+'.xyz'))
