@@ -157,9 +157,9 @@ def connect_two_molecules(core,ligand,dist_limit):
     core.delete_atom(core[1])
 
     # Resizing the distance for new bond considering it's not always C-C bond
-    if (str(core_other).split())[0] == "C":
+    if core_other.symbol == "C":
         bond_lenght = 1.54
-    elif ((str(core_other).split())[0]) == "N":
+    elif core_other.symbol == "N":
         bond_lenght = 1.469
     else:
         bond_lenght = 1.5
