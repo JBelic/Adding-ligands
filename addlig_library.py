@@ -60,16 +60,14 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
     3. X atom on the ligand, 4. core coordinates and 5. distance limit between atoms.
     It rotates ligand around the bond between the H atom and atom connected to H. Criteria for good geometry is distance between ligand and core atoms.
     The H atom and atom connected to it are excuded from the distance check.
-    Returns coordinates of rotated ligand and and symbols of closest atoms.
+    Returns coordinates of rotated ligand and and binaries True or False; True for good and False for bad geometry, wow!
     """
 
-
     # Checks if ligand is already in good position
-    dist = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
-    if dist[0] >= dist_limit:
-        distance = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
-        closest_atoms = (str(distance[1]).split())[0] + (str(distance[2]).split())[0]
-    
+    distance = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
+    if distance[0] >= dist_limit:
+        # If molecule has good geometry final_grade is True and it will serve as indicator for good or bad geometry
+        final_grade = True
     
     # If distance is shorter than required, molecule is rotated for 360 degrees in specified 'angle_steps' and for every new position 
     # shortest distance between two atoms and symbols of two atoms are placed in list 'atoms_distances'
@@ -81,51 +79,48 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
         for alfa in range(37):
             ligand.rotate_bond(lig_h.bonds[0],lig_other, angle_step)
             atoms_distances.append(ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)[:])
-
-        # From the list with atoms and distances only distances are extracted
+       
+        # atoms_dstances returns list = [distance, ligand atom, core atom]
+        # From the list with all atoms and distances extracts distances 
         all_distances = []
         for sublist in atoms_distances:
             all_distances.append(sublist[0])
 
-        # From all distances only ones that meet the criteria are extracted
+        # From all distances only ones that meet the criteria are extracted (larger distance than distance limit)
         matches = [all_distances.index(x) for x in all_distances if x >= dist_limit]
+        # If the list of distances, that meet the criteria, is not empty - takes first distance that met the criteria
         if len(matches) != 0:
             good_angle = matches[0]*angle_step
             ligand.rotate_bond(lig_h.bonds[0],lig_other, good_angle)
             
-            distance = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
-            closest_atoms = (str(distance[1]).split())[0] + (str(distance[2]).split())[0]
+            final_grade = True
 
-        # If there are no atoms that meet the distance criteria, another search trough the simbols of closest atoms. If two hydrogens 
-        # are closest atoms distance between them could be shorter than for other atoms. 
+        # If there are no atoms that meet the distance criteria, script does another search trough the simbols of closest atoms. If two hydrogens 
+        # are closest atoms, distance between them could be shorter than for other atoms. 
         else: 
             ligand_atoms = []
             core_atoms = []
             for sublist in atoms_distances:
-                ligand_atoms.append((str(sublist[1]).split())[0])
-                core_atoms.append((str(sublist[2]).split())[0])
+                ligand_atoms.append(sublist[1].symbol)
+                core_atoms.append(sublist[2].symbol)
         
             h_matches = [all_distances.index(x) for x in all_distances if x >= 2.25] # 2.25 = 1.5^2
 
-            # If there are two H atoms that are on distance higher than 1.5 A, geomtetry is accepted
+            # If there are two H atoms that are on distance higher than 1.5 A, geomtetry is accepted 
             if len(h_matches) != 0:
                 h_match = [x for x in h_matches if ligand_atoms[x] == core_atoms[x] and ligand_atoms[x] == "H"]
-                
                 h_good_angle = h_match[0]*angle_step
-
                 ligand.rotate_bond(lig_h.bonds[0],lig_other, h_good_angle)
 
-                distance = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)
-                closest_atoms =  (str(distance[1]).split())[0] + (str(distance[2]).split())[0]
+                final_grade = True
+            
             else:
-                # if non of the condidtions are fulfiled, program returns string instead of a float, user can separate those molecules
-                distance = ["Too short"]
-                closest_atoms = ["Too short"]
-   
-    return ligand, closest_atoms
+                final_grade = False 
+
+    return ligand, final_grade
 
 
-def connect_two_molecules(core,ligand,dist_limit):
+def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     """
     Takes molecule coordinates as arguments. 
     Connects two molecules in place of first atom on the coordinate list. First atom should be hydrogen. 
@@ -157,9 +152,9 @@ def connect_two_molecules(core,ligand,dist_limit):
     core.delete_atom(core[1])
 
     # Resizing the distance for new bond considering it's not always C-C bond
-    if (str(core_other).split())[0] == "C":
+    if core_other.symbol == "C":
         bond_lenght = 1.54
-    elif ((str(core_other).split())[0]) == "N":
+    elif core_other.symbol == "N":
         bond_lenght = 1.469
     else:
         bond_lenght = 1.5
@@ -169,15 +164,16 @@ def connect_two_molecules(core,ligand,dist_limit):
     diff_vec = cc_vec - hc_vec
     ligand.translate(diff_vec)
     
-    # If ligand is not diatomic it is rotation check is done to confirm good geometry or search for one. 
+    # If ligand is not diatomic, rotation check is done to confirm the good geometry or search for the new one.
+    # Function rotation_check returns list [coordinates, True(or False)]
     # Coordinates from input_ligand are changed by using rotation_check fuction
-    if len(ligand) > 2:
-        closest_atoms_check = rotation_check(ligand,lig_h,lig_other,core,dist_limit)[1]
-        final_check = ligand.restr_distance_to_mol(core, excluded1=lig_h, excluded2=lig_other, return_atoms=True)[0]
-    else:
-        # As these values are returned from a function, 
-        closest_atoms_check = "diatomic"
-        final_check = "diatomic"
+    
+    if rot_check == True:
+        if len(ligand) > 2:
+            final_check = rotation_check(ligand,lig_h,lig_other,core,dist_limit)[1]
+        else:
+            # If it is diatomic, len(ligand) < 2, distance is set on 1.5 and there is no rotation check 
+            final_check = True
         
         
     # Deletes atom in ligand
@@ -185,7 +181,7 @@ def connect_two_molecules(core,ligand,dist_limit):
     
     # Adds two coordinates together
     new_molecule = core + ligand
-    return  new_molecule, final_check, closest_atoms_check
+    return  new_molecule, final_check
 
 
 
