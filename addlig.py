@@ -14,10 +14,10 @@ start = time.time()
 # Path to the working folder where are prepared molecules and where folder with new coordinares
 # will be made with the specific name
 
-working_folder_path = "/Users/jelena/Desktop/scripts/adding_ligands/1.11.square_dist"
+working_folder_path = "/Users/jelena/Desktop/Adding-ligands-master"
 
-input_ligands = read_molecules(os.path.join(working_folder_path,'lig_test'))
-input_cores = read_molecules(os.path.join(working_folder_path,'cor_test'))
+input_ligands = read_molecules(os.path.join(working_folder_path,'LIGANDS'))
+input_cores = read_molecules(os.path.join(working_folder_path,'CORES'))
 
 new_directory = 'new_molecules'
 distance_limit_squared = 2.89 # square of 1.7; if atoms are closer, geometry is rejected
@@ -26,11 +26,11 @@ distance_limit_squared = 2.89 # square of 1.7; if atoms are closer, geometry is 
 ##############################################          new folders              ############################################
 
 # Arranging folders
-working_folder = os.path.join(working_folder_path,new_directory)
-folders = ["monosubstituted", "disupstituted", "error_folder"]
-for i in range(len(folders)):
-    if not os.path.exists(os.path.join(working_folder,folders[i])):
-        os.makedirs(os.path.join(working_folder, folders[i]))
+#working_folder = os.path.join(working_folder_path,new_directory)
+#folders = ["monosubstituted", "disupstituted", "error_folder"]
+#for i in range(len(folders)):
+if not os.path.exists(os.path.join(working_folder_path,new_directory)):
+    os.makedirs(os.path.join(working_folder_path,new_directory))
 
 ##############################################         Monosubstitution      ################################################
 
@@ -65,18 +65,13 @@ for d in range(len(input_ligands)):
 #For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining) 
 
 for name, molecule in mono_subs.items():
-    if (molecule[1]) == 'diatomic':
-        molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
-    elif float(molecule[1]) >= distance_limit_squared:
-        molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
+    if molecule[1] == True:
+        molecule[0].write(os.path.join(working_folder_path,new_directory, 'mono_' + name +'.xyz'))
+    else:
+        molecule[0].write(os.path.join(working_folder_path,new_directory, 'err_' + name + '.xyz'))
+        print ("Molecule %s has problematic geometry!" % name)
 
-    elif float(molecule[1]) < distance_limit_squared:
-        if molecule[2] == 'HH':
-            molecule[0].write(os.path.join(working_folder,folders[0],name+'.xyz'))
-        else:
-            molecule[0].write(os.path.join(working_folder,folders[2]+'opt.xyz'))
-            print ("Molecule %s has problematic geometry!" % name)
-        
+
 
 
 
@@ -107,18 +102,13 @@ for d in range(len(input_ligands)):
 #For diatomic molecules, distance is specified by user and it's given as a string. 
 #For the other molecule it's given as a float and it serves like indicator for steric clash, if distance (float number) is too small molecule is stored in separate folder 
 
+
 for name, molecule in di_subs.items():
-    if (molecule[1]) =='diatomic':
-        molecule[0].write(os.path.join(working_folder,folders[1],name+'.xyz'))
-    elif float(molecule[1]) >= distance_limit_squared:
-        molecule[0].write(os.path.join(working_folder,folders[1],name+'.xyz'))
-    elif float(molecule[1]) < distance_limit_squared:
-        if molecule[2] == 'HH':
-            molecule[0].write(os.path.join(working_folder,folders[1],name+'.xyz'))
-        else:
-            molecule[0].write(os.path.join(working_folder,folders[2],name+'opt.xyz'))
-            print ("Molecule %s has problematic geometry!" % name)
-        
+    if molecule[1] == True:
+        molecule[0].write(os.path.join(working_folder_path,new_directory, 'di_' + name +'.xyz'))
+    else:
+        molecule[0].write(os.path.join(working_folder_path,new_directory, 'err_' + name + '.xyz'))
+        print ("Molecule %s has problematic geometry!" % name)       
 
 
 # The End 
