@@ -14,10 +14,14 @@ start = time.time()
 # Path to the working folder where are prepared molecules and where folder with new coordinares
 # will be made with the specific name
 
-working_folder_path = "/Users/jelena/Desktop/Adding-ligands-master"
+working_folder_path = r'/Users/basvanbeek/Documents/GitHub/Adding-ligands'
 
 input_ligands = read_molecules(os.path.join(working_folder_path,'LIGANDS'))
+input_ligands = [bob(input_ligands[ligand]) for ligand in input_ligands]
 input_cores = read_molecules(os.path.join(working_folder_path,'CORES'))
+input_cores = [bob(input_cores[core]) for core in input_cores]
+# Define bob, the greatest of all properties
+
 
 new_directory = 'new_molecules'
 distance_limit_squared = 2.89 # square of 1.7; if atoms are closer, geometry is rejected
@@ -36,27 +40,16 @@ if not os.path.exists(os.path.join(working_folder_path,new_directory)):
 
 ##### Preparing coordinates #####
 
-#Extracting core coordinates from imported dictionary
-coords_c = list(input_cores.values())
-#Extracting ligand coordinates from imported dictionary
-ligand_coords = list(input_ligands.values())
-#Making list of lists with core coordinates. Core molecules are copied as many times as there are ligands.
-cores_list = [copy.deepcopy(coords_c) for ligand in input_ligands]
-
-#Exctracting core and ligand names from imported dictionary
-lig_names = list(input_ligands.keys())
-cor_names = list(input_cores.keys())
 
 ##### Monosubstitution #####
 
 # To every list of cores one type of ligand is added
 # mono_subs contaions of key = name of molecule, value = (coordinates of new molecule, shortest distance between core and ligand after its connection)
-mono_subs = {}
+mono_subs = []
 for ligand in input_ligands:
     # In each list c goes through all cores. New copies of ligands are needed in every loop
     for core in input_cores:
-       	ligando = copy.deepcopy(ligand)
-       	mono_subs[core + "_" + ligand] = (connect_two_molecules(copy.deepcopy(input_cores[core]),input_ligands[ligand],distance_limit_squared))
+       	mono_subs.append(connect_two_molecules(core,ligand,distance_limit_squared))
 
 #For diatomic molecules, distance is specified by user and it's given as a string.
 #For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining)

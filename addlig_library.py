@@ -105,7 +105,7 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
                 core_atoms.append(sublist[2].symbol)
 
             h_matches = [all_distances.index(x) for x in all_distances if x >= 2.25] # 2.25 = 1.5^2
-
+            print(h_matches, '\n')
             # If there are two H atoms that are on distance higher than 1.5 A, geomtetry is accepted
             if len(h_matches) != 0:
                 h_match = [x for x in h_matches if ligand_atoms[x] == core_atoms[x] and ligand_atoms[x] == "H"]
@@ -127,6 +127,9 @@ def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     Returns list of three items: 1. coordinates of new molecule, 2. distance between closest atoms from ligand and core,
     3. closest atoms
     """
+    core = copy.deepcopy(core)
+    ligand = copy.deepcopy(ligand)
+
     # Lenght of C-C and C-N bonds for adjustment of new bond between core and ligand
     cc_lenght = 1.54
     nc_lenght = 1.469
@@ -134,9 +137,12 @@ def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     # Guess
     ligand.guess_bonds()
     core.guess_bonds()
-
     # Defines first atom on coordinate list (hydrogen), atom connected to it and vector representing bond between them
-    core_h = core[1]
+    bob = {}
+    for atom in core:
+        if isinstance(atom.properties.bob, int):
+            bob[atom.properties.bob] = atom
+    core_h = bob[sorted(bob)[0]]
     lig_h = ligand[1]
     core_other = core_h.bonds[0].other_end(core_h)
     core_vector = core_h.vector_to(core_other)
@@ -181,8 +187,32 @@ def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
 
     # Adds two coordinates together
     new_molecule = core + ligand
+    new_molecule.properties.name = core.properties.name + "_" + ligand.properties.name
     return  new_molecule, final_check
 
+
+def bob(plams_mol):
+    """
+    Marks plams atoms with a property called bob.
+    The argument bob (<int>) represents the order in which atoms will be substituted.
+
+    plams_mol <plams.Molecule>: An input molecule with the plams_mol.properties.comment property.
+
+    return <plams.Molecule>: A plams molecule with specific atoms marked with the
+        plams_atom.properties.bob property.
+    """
+    comment = plams_mol.properties.comment
+    comment = comment.split()
+    comment_list = []
+    for item in comment:
+        try:
+            index = int(item)
+            comment_list.append(index)
+        except ValueError:
+            pass
+    for i, index in enumerate(comment_list):
+        plams_mol[index].properties.bob = i
+    return plams_mol
 
 
 
