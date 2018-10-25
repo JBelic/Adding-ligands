@@ -39,12 +39,9 @@ if not os.path.exists(os.path.join(working_folder_path,new_directory)):
 #Extracting core coordinates from imported dictionary
 coords_c = list(input_cores.values())
 #Extracting ligand coordinates from imported dictionary
-ligand_coords = listk(input_ligands.values())
+ligand_coords = list(input_ligands.values())
 #Making list of lists with core coordinates. Core molecules are copied as many times as there are ligands.
-cores_list = []
-for i in range(len(input_ligands)):
-    kopi = copy.deepcopy(coords_c)
-    cores_list.append(kopi)
+cores_list = [copy.deepcopy(coords_c) for ligand in input_ligands]
 
 #Exctracting core and ligand names from imported dictionary
 lig_names = list(input_ligands.keys())
@@ -55,11 +52,11 @@ cor_names = list(input_cores.keys())
 # To every list of cores one type of ligand is added
 # mono_subs contaions of key = name of molecule, value = (coordinates of new molecule, shortest distance between core and ligand after its connection)
 mono_subs = {}
-for d in range(len(input_ligands)):
+for ligand in input_ligands:
     # In each list c goes through all cores. New copies of ligands are needed in every loop
-    for c in range(len(input_cores)):
-       	ligando = copy.deepcopy(ligand_coords)
-       	mono_subs[cor_names[c]+ "_" + lig_names[d]] = (connect_two_molecules(cores_list[d][c],ligando[d],distance_limit_squared))
+    for core in input_cores:
+       	ligando = copy.deepcopy(ligand)
+       	mono_subs[core + "_" + ligand] = (connect_two_molecules(copy.deepcopy(input_cores[core]),input_ligands[ligand],distance_limit_squared))
 
 #For diatomic molecules, distance is specified by user and it's given as a string.
 #For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining)
@@ -82,10 +79,7 @@ for name, molecule in mono_subs.items():
 # Copies of coordinates of monosupstituted molecules
 monosub_coords = [x[0] for x in list(mono_subs.values())]
 # Making list of lists with monosubs coordinates. Core molecules are copied as many times as there are ligands.
-monosub_copies = []
-for i in range(len(input_ligands)):
-    kopi = copy.deepcopy(monosub_coords)
-    monosub_copies.append(kopi)
+monosub_copies = [copy.deepcopy(monosub_coords) for i in input_ligands]
 
 ligand_coords2 = list(input_ligands.values())
 monosub_names = list(mono_subs.keys())
