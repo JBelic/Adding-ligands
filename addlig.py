@@ -37,18 +37,18 @@ if not os.path.exists(os.path.join(working_folder_path,new_directory)):
 ##### Preparing coordinates #####
 
 #Extracting core coordinates from imported dictionary
-coords_c = mol_coords(input_cores)
+coords_c = list(input_cores.values())
 #Extracting ligand coordinates from imported dictionary
-ligand_coords = mol_coords(input_ligands)
+ligand_coords = listk(input_ligands.values())
 #Making list of lists with core coordinates. Core molecules are copied as many times as there are ligands.
 cores_list = []
 for i in range(len(input_ligands)):
     kopi = copy.deepcopy(coords_c)
     cores_list.append(kopi)
-    
+
 #Exctracting core and ligand names from imported dictionary
-lig_names = mol_names(input_ligands)
-cor_names = mol_names(input_cores)
+lig_names = list(input_ligands.keys())
+cor_names = list(input_cores.keys())
 
 ##### Monosubstitution #####
 
@@ -57,12 +57,12 @@ cor_names = mol_names(input_cores)
 mono_subs = {}
 for d in range(len(input_ligands)):
     # In each list c goes through all cores. New copies of ligands are needed in every loop
-    for c in range(len(input_cores)): 
+    for c in range(len(input_cores)):
        	ligando = copy.deepcopy(ligand_coords)
        	mono_subs[cor_names[c]+ "_" + lig_names[d]] = (connect_two_molecules(cores_list[d][c],ligando[d],distance_limit_squared))
 
-#For diatomic molecules, distance is specified by user and it's given as a string. 
-#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining) 
+#For diatomic molecules, distance is specified by user and it's given as a string.
+#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance is too small, molecule is stored in separate folder (list of folders made on the beggining)
 
 for name, molecule in mono_subs.items():
     if molecule[1] == True:
@@ -79,16 +79,16 @@ for name, molecule in mono_subs.items():
 
 ##### Preparing coordinates #####
 
-# Copies of coordinates of monosupstituted molecules   
-monosub_coords = [x[0] for x in mol_coords(mono_subs)]
+# Copies of coordinates of monosupstituted molecules
+monosub_coords = [x[0] for x in list(mono_subs.values())]
 # Making list of lists with monosubs coordinates. Core molecules are copied as many times as there are ligands.
 monosub_copies = []
 for i in range(len(input_ligands)):
     kopi = copy.deepcopy(monosub_coords)
     monosub_copies.append(kopi)
 
-ligand_coords2 = mol_coords(input_ligands)
-monosub_names = mol_names(mono_subs)
+ligand_coords2 = list(input_ligands.values())
+monosub_names = list(mono_subs.keys())
 
 ####### Disustitution #####
 
@@ -96,11 +96,11 @@ monosub_names = mol_names(mono_subs)
 di_subs = {}
 for d in range(len(input_ligands)):
     for c in range(d*len(input_cores),len(mono_subs)):
-        ligando = copy.deepcopy(ligand_coords2) 
+        ligando = copy.deepcopy(ligand_coords2)
         di_subs [monosub_names[c]+ "_" + lig_names[d]] = (connect_two_molecules(monosub_copies[d][c],ligando[d],distance_limit_squared))
 
-#For diatomic molecules, distance is specified by user and it's given as a string. 
-#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance (float number) is too small molecule is stored in separate folder 
+#For diatomic molecules, distance is specified by user and it's given as a string.
+#For the other molecule it's given as a float and it serves like indicator for steric clash, if distance (float number) is too small molecule is stored in separate folder
 
 
 for name, molecule in di_subs.items():
@@ -108,10 +108,10 @@ for name, molecule in di_subs.items():
         molecule[0].write(os.path.join(working_folder_path,new_directory, 'di_' + name +'.xyz'))
     else:
         molecule[0].write(os.path.join(working_folder_path,new_directory, 'err_' + name + '.xyz'))
-        print ("Molecule %s has problematic geometry!" % name)       
+        print ("Molecule %s has problematic geometry!" % name)
 
 
-# The End 
+# The End
 end = time.time()
 print("Elapsed wall-clock time:  ", end - start)
 
