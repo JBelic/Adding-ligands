@@ -3,19 +3,8 @@ import numpy as np
 import math
 import copy
 import time
+import os
 
-
-def mol_names(mol_dict):
-    names = []
-    for key, value in mol_dict.items():
-        names.append(key)
-    return names
-
-def mol_coords(mol_dict):
-    coords = []
-    for key, value in mol_dict.items():
-        coords.append(value)
-    return coords
 
 @add_to_class(Molecule)
 def restr_distance_to_mol(self, other, excluded=(None, None), result_unit='angstrom', return_atoms=False):
@@ -81,7 +70,7 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
             atoms_distances.append(ligand.restr_distance_to_mol(core, excluded=(lig_h, lig_other), return_atoms=True)[:])
 
         # atoms_dstances returns list = [distance, ligand atom, core atom]
-        # From the list with all atoms and distances extracts distances
+        # From that list extracts distances
         all_distances = []
         for sublist in atoms_distances:
             all_distances.append(sublist[0])
@@ -95,8 +84,8 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
 
             final_grade = True
 
-        # If there are no atoms that meet the distance criteria, script does another search trough the simbols of closest atoms. If two hydrogens
-        # are closest atoms, distance between them could be shorter than for other atoms.
+        # If there are no atoms that meet the distance criteria, script does another search trough the simbols of closest atoms. 
+        # If two hydrogens are closest atoms, distance between them can be shorter than for other atoms.
         else:
             ligand_atoms = []
             core_atoms = []
@@ -105,7 +94,7 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
                 core_atoms.append(sublist[2].symbol)
 
             h_matches = [all_distances.index(x) for x in all_distances if x >= 2.25] # 2.25 = 1.5^2
-            print(h_matches, '\n')
+
             # If there are two H atoms that are on distance higher than 1.5 A, geomtetry is accepted
             if len(h_matches) != 0:
                 h_match = [x for x in h_matches if ligand_atoms[x] == core_atoms[x] and ligand_atoms[x] == "H"]
@@ -123,9 +112,8 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
 def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     """
     Takes molecule coordinates as arguments.
-    Connects two molecules in place of first atom on the coordinate list. First atom should be hydrogen.
-    Returns list of three items: 1. coordinates of new molecule, 2. distance between closest atoms from ligand and core,
-    3. closest atoms
+    Connects two molecules substituting atoms mentioned is coordinate file
+    Returns list of three items: 1. coordinates of new molecule, 2. binary - True for good geometry, False for bad.
     """
     core = copy.deepcopy(core)
     ligand = copy.deepcopy(ligand)
@@ -137,13 +125,22 @@ def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     # Guess
     ligand.guess_bonds()
     core.guess_bonds()
-    # Defines first atom on coordinate list (hydrogen), atom connected to it and vector representing bond between them
-    bob = {}
+    
+    # Good guy Bob.
+    # Bob searches for atoms that have properties 'bob'. Those atoms will be substituted.
+    bobed_core = {}
     for atom in core:
         if isinstance(atom.properties.bob, int):
-            bob[atom.properties.bob] = atom
-    core_h = bob[sorted(bob)[0]]
-    lig_h = ligand[1]
+            bobed_core[atom.properties.bob] = atom
+    core_h = bobed_core[sorted(bobed_core)[0]]
+
+    bobed_lig = {}
+    for atom in ligand:
+        if isinstance(atom.properties.bob, int):
+            bobed_lig[atom.properties.bob] = atom
+    lig_h = bobed_lig[sorted(bobed_lig)[0]]
+    
+    # Defining atom connected to marked atom and vector between them
     core_other = core_h.bonds[0].other_end(core_h)
     core_vector = core_h.vector_to(core_other)
     lig_other = lig_h.bonds[0].other_end(lig_h)
@@ -188,6 +185,7 @@ def connect_two_molecules(core,ligand,dist_limit,rot_check=True):
     # Adds two coordinates together
     new_molecule = core + ligand
     new_molecule.properties.name = core.properties.name + "_" + ligand.properties.name
+    
     return  new_molecule, final_check
 
 
@@ -213,6 +211,36 @@ def bob(plams_mol):
     for i, index in enumerate(comment_list):
         plams_mol[index].properties.bob = i
     return plams_mol
+
+def monosubstitution(input_ligands, input_cores, distance_limit_squared):
+    # To every list of cores one type of ligand is added
+    # mono_subs contaions of key = name of molecule, value = (coordinates of new molecule, shortest distance between core and ligand after its connection)
+    mono_subs = []
+    for ligand in input_ligands:
+        # In each list c goes through all cores. New copies of ligands are needed in every loop
+        for core in input_cores:
+            mono_subs.append(connect_two_molecules(core,ligand,distance_limit_squared))
+    
+    return mono_subs
+
+def mono_di_substitution(input_ligands, input_cores, distance_limit_squared):
+
+    mono_subs = monosubstitution(input_ligands, input_cores, distance_limit_squared)
+    
+    # Exctracts coordinates for list of mono_subs
+    monosub_coords = [x[0] for x in mono_subs]
+    
+    # Takes monosubstituted core and adds ligands, without duplicas
+    di_subs = []
+    for d in range(len(input_ligands)):
+        ligand = input_ligands[d]
+        for c in range(d*len(input_cores),len(mono_subs)):
+            core = mono_subs[c][0]
+            di_subs.append(connect_two_molecules(core,ligand,distance_limit_squared))
+    
+    return mono_subs, di_subs
+
+
 
 
 
