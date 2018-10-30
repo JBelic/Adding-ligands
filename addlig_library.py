@@ -93,7 +93,7 @@ def rotation_check(ligand,lig_h,lig_other,core,dist_limit):
                 ligand_atoms.append(sublist[1].symbol)
                 core_atoms.append(sublist[2].symbol)
 
-            h_matches = [all_distances.index(x) for x in all_distances if x >= 2.25] # 2.25 = 1.5^2
+            h_matches = [all_distances.index(x) for x in all_distances if x >= 1.5] 
 
             # If there are two H atoms that are on distance higher than 1.5 A, geomtetry is accepted
             if len(h_matches) != 0:
