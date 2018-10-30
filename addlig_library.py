@@ -26,7 +26,7 @@ def restr_distance_to_mol(self, other, excluded=(None, None), result_unit='angst
                         dist = newdist
                         atom1 = at1
                         atom2 = at2
-        res = Units.convert(dist, 'angstrom', result_unit)
+        res = Units.convert(math.sqrt(dist), 'angstrom', result_unit)
         if return_atoms:
             return res, atom1, atom2
         return res
@@ -212,20 +212,20 @@ def bob(plams_mol):
         plams_mol[index].properties.bob = i
     return plams_mol
 
-def monosubstitution(input_ligands, input_cores, distance_limit_squared):
+def monosubstitution(input_ligands, input_cores, dist_limit):
     # To every list of cores one type of ligand is added
     # mono_subs contaions of key = name of molecule, value = (coordinates of new molecule, shortest distance between core and ligand after its connection)
     mono_subs = []
     for ligand in input_ligands:
         # In each list c goes through all cores. New copies of ligands are needed in every loop
         for core in input_cores:
-            mono_subs.append(connect_two_molecules(core,ligand,distance_limit_squared))
+            mono_subs.append(connect_two_molecules(core,ligand, dist_limit))
     
     return mono_subs
 
-def mono_di_substitution(input_ligands, input_cores, distance_limit_squared):
+def mono_di_substitution(input_ligands, input_cores, dist_limit):
 
-    mono_subs = monosubstitution(input_ligands, input_cores, distance_limit_squared)
+    mono_subs = monosubstitution(input_ligands, input_cores, dist_limit)
     
     # Exctracts coordinates for list of mono_subs
     monosub_coords = [x[0] for x in mono_subs]
@@ -236,7 +236,7 @@ def mono_di_substitution(input_ligands, input_cores, distance_limit_squared):
         ligand = input_ligands[d]
         for c in range(d*len(input_cores),len(mono_subs)):
             core = mono_subs[c][0]
-            di_subs.append(connect_two_molecules(core,ligand,distance_limit_squared))
+            di_subs.append(connect_two_molecules(core,ligand, dist_limit))
     
     return mono_subs, di_subs
 
