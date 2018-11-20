@@ -227,9 +227,6 @@ def mono_di_substitution(input_ligands, input_cores, dist_limit):
 
     mono_subs = monosubstitution(input_ligands, input_cores, dist_limit)
     
-    # Exctracts coordinates for list of mono_subs
-    monosub_coords = [x[0] for x in mono_subs]
-    
     # Takes monosubstituted core and adds ligands, without duplicas
     di_subs = []
     for d in range(len(input_ligands)):
